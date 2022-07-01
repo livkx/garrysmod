@@ -271,21 +271,44 @@ end
 --
 -- Moves the mouth when talking on voicecom
 --
+
+local function DoMouthMove( ply, weight )
+	
+	local FlexNum = ply:GetFlexNum() - 1
+	if ( FlexNum <= 0 ) then return end
+
+	for i = 0, FlexNum - 1 do
+	
+		local Name = ply:GetFlexName( i )
+
+		if ( Name == "jaw_drop" || Name == "right_part" || Name == "left_part" || Name == "right_mouth_drop" || Name == "left_mouth_drop" ) then
+
+			if ( ply:IsSpeaking() ) then
+				ply:SetFlexWeight( i, math.Clamp( ply:VoiceVolume() * 2, 0, 2 ) )
+			else
+				ply:SetFlexWeight( i, 0 )
+			end
+			ply:SetFlexWeight( i, weight )
+
+		end
+
+	end
+
+end
+
 function GM:MouthMoveAnimation( ply )
 
-	local flexes = {
-		ply:GetFlexIDByName( "jaw_drop" ),
-		ply:GetFlexIDByName( "left_part" ),
-		ply:GetFlexIDByName( "right_part" ),
-		ply:GetFlexIDByName( "left_mouth_drop" ),
-		ply:GetFlexIDByName( "right_mouth_drop" )
-	}
+	if ply:IsSpeaking() then
 
-	local weight = ply:IsSpeaking() && math.Clamp( ply:VoiceVolume() * 2, 0, 2 ) || 0
+		ply.m_bWasSpeaking = true
 
-	for k, v in pairs( flexes ) do
+		DoMouthMove( ply, math.Clamp( ply:VoiceVolume() * 2, 0, 2 ) )
 
-		ply:SetFlexWeight( v, weight )
+	elseif ply.m_bWasSpeaking then
+
+		ply.m_bWasSpeaking = false
+
+		DoMouthMove( ply, 0 )
 
 	end
 
